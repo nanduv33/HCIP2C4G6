@@ -63,9 +63,6 @@
         padding: 1em;
         border: 1px solid silver;
     }
-    #createGradient {
-      padding-bottom: 2px;
-    }
 
 	</style>
 
@@ -172,9 +169,10 @@
       // create a gradient of the two previously used colors
       function createGradient() {
         gradientItems.push({gradient: `linear-gradient(to right, ${cp.history[cp.history.length-1]} , ${cp.history[cp.history.length-2]})`, color1: cp.history[cp.history.length-1], color2: cp.history[cp.history.length-2]})
-
+        let index = gradientItems.length-1
         $(document).ready(function() {
             var object = {
+                id: index.toString(),
                 class: "dropdown-item",
                 href: "#",
                 css: {
@@ -182,30 +180,18 @@
                 }
             };
             var addition = $("<a>", object);
-            let index = gradientItems.length-1
-            addition.html(index.toString());
-            $(".dropdown-menu").append(addition);
+            console.log("Adding index: ", index);
+            addition.html("Gradient " + index.toString());
+            $("#dropdownMenu").append(addition);
         });
-        
-        // $('.dropdown-menu').append("<a class="dropdown-item" style=`linear-gradient(to right, ${cp.history[cp.history.length-1]} , ${cp.history[cp.history.length-2]})` href="#">Action</a>");
 
       }
-      // $('.dropdown-item').on('click', () => {
-      //   var id = document.getElementsByClassName("dropdown-item")[0].id;
-      //   console.log(id);
-      // });
 
-      $('.dropdown-menu').on('click', function(){
-          var txt = ($(this).text());
-          var index = parseInt(txt);
-          console.log("INDEX: " + index)
+      $('.dropdown-menu').on('click', function(e){
+          var index = parseInt(e.target.id);
           stops = [gradientItems[index].color1, gradientItems[index].color2];
-          // myCustomInteraction();
       });
       
-      // const favColor = () => {
-      //   createColorPalette(cp.history[cp.history.length-1]);
-      // }
       popupCustom = new Picker({
           parent: colorPicker,
           popup: false,
@@ -221,15 +207,6 @@
 
       // create a gradient of the two previously used colors when user clicks on create gradient button
       document.getElementById("createGradient").addEventListener("click", createGradient);
-
-      // var dropdown = document.querySelector(".dropdown-menu");
-      // dropdown.innerHTML = gradientItems.map(function (color) {
-      //   return '<a >' + '</a>';
-      // }).join('') + '</ul>';
-      // {gradientItems.map((color, i) => (
-      //       <a class="dropdown-item" href="#" style=`background-image: ${color.gradient}`></a>
-      //     ))}
-
       
 			init(true);
 		}
@@ -241,14 +218,16 @@
 	<div id="color-palette"></div>
   <div class="container">
     <div class="row">
-      <div class="col-sm">
+      <div class="col-1"></div>
+      <div class="col-3">
+        <div style="padding-bottom: 2vh">
          <button class="btn btn-primary" id="createGradient">Create Gradient</button>
-         <br/>
+        </div>
         <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="dropdownMenuButton">Gradient Colors</button>
-        <div class="dropdown-menu">
+        <div id="dropdownMenu" class="dropdown-menu">
         </div>
       </div>
-      <div class="col-6">
+      <div class="col-5">
         <div class="button" id="picker">Color Picker</div>
       </div>
       <div class="col-sm">
