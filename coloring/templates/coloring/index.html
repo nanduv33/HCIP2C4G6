@@ -3,20 +3,28 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   	<title>P3 Coloring</title>
 
 	<script type="text/javascript" src="{% static 'coloring/vendors/jquery/jquery-3.3.1.min.js' %}"></script>
 	<script type="text/javascript" src="{% static 'coloring/vendors/paper/paper-full.min.js' %}"></script>
+  <script src="https://unpkg.com/vanilla-picker@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+  
 
 	<style type="text/css">
 		#color-palette {
-			width: 300px;
+			width: 70px;
 			background-color: #f1f1f1;
 			display: flex;
 			flex-wrap: wrap;
 			position: absolute;
 			top: 0;
+      right: 0;
 		}
 
 		.swatch {
@@ -26,6 +34,7 @@
 			-webkit-border-radius: 12px;
 			border-radius: 12px;
 			margin: 3px;
+      cursor: pointer;
 		}
 
 		#myCanvas {
@@ -35,6 +44,29 @@
 		    margin-right: auto;
 		    display: block;
 		}
+    .button {
+        display: inline-block;
+        box-sizing: border-box;
+        padding: .5em 1em;
+        min-height: 2em;
+        border: none;
+        outline: none;
+        overflow: visible;
+        background-color: black;
+        color: white;
+        font-family: sans-serif;
+        text-align: center;
+        cursor: pointer;
+    }
+    #picker {
+        display: table;
+        padding: 1em;
+        border: 1px solid silver;
+    }
+    #createGradient {
+      padding-bottom: 2px;
+    }
+
 	</style>
 
 	<script type="text/javascript" canvas="canvas">
@@ -54,16 +86,37 @@
 				options: [],
 				$container: $('#color-palette')
 			}
+      var stops = ["#000000","#000000"];
+      var gradientItems = [];
 
 			function myCustomInteraction() {
 				var tool = new paper.Tool();
+        var startPoint = 0;
 
 				tool.onMouseDown = function (event) {
+          startPoint = event.point;
+				}
+
+				tool.onMouseUp = function (event) {
 				    var hit = mandala.item.hitTest(event.point, { tolerance: 10, fill: true });
 				    if (hit) {
 				    		// Color pallette keeps track of the full history of colors, though we
 				    		// only color in with the most-recent color.
-				        hit.item.fillColor = cp.history[cp.history.length - 1];
+                console.log(startPoint);
+                console.log(startPoint.x);
+                console.log(event.point);
+                if (startPoint.x == event.point.x && startPoint.y == event.point.y) {
+                  hit.item.fillColor = cp.history[cp.history.length - 1];
+                }
+                else {
+                    hit.item.fillColor = {
+                    gradient: {
+                    stops: stops
+                    },
+                    origin: startPoint,
+                    destination: event.point
+                  }
+                }
 				    }
 				}
 			}
@@ -106,11 +159,76 @@
 				    if (custom) {
 				    	myCustomInteraction();
 				    } else {
-				    	myGradientInteraction();
+				    	myCustomGradientInteraction();
 				    }
 
 				});
 			}
+      var colorPicker = document.querySelector('#picker');
+
+      function favColor(){
+        createColorPalette([cp.history[cp.history.length-1]]);
+      }
+      // create a gradient of the two previously used colors
+      function createGradient() {
+        gradientItems.push({gradient: `linear-gradient(to right, ${cp.history[cp.history.length-1]} , ${cp.history[cp.history.length-2]})`, color1: cp.history[cp.history.length-1], color2: cp.history[cp.history.length-2]})
+
+        $(document).ready(function() {
+            var object = {
+                class: "dropdown-item",
+                href: "#",
+                css: {
+                    "background-image": `linear-gradient(to right, ${cp.history[cp.history.length-1]} , ${cp.history[cp.history.length-2]})`
+                }
+            };
+            var addition = $("<a>", object);
+            let index = gradientItems.length-1
+            addition.html(index.toString());
+            $(".dropdown-menu").append(addition);
+        });
+        
+        // $('.dropdown-menu').append("<a class="dropdown-item" style=`linear-gradient(to right, ${cp.history[cp.history.length-1]} , ${cp.history[cp.history.length-2]})` href="#">Action</a>");
+
+      }
+      // $('.dropdown-item').on('click', () => {
+      //   var id = document.getElementsByClassName("dropdown-item")[0].id;
+      //   console.log(id);
+      // });
+
+      $('.dropdown-menu').on('click', function(){
+          var txt = ($(this).text());
+          var index = parseInt(txt);
+          console.log("INDEX: " + index)
+          stops = [gradientItems[index].color1, gradientItems[index].color2];
+          // myCustomInteraction();
+      });
+      
+      // const favColor = () => {
+      //   createColorPalette(cp.history[cp.history.length-1]);
+      // }
+      popupCustom = new Picker({
+          parent: colorPicker,
+          popup: false,
+          alpha: false,
+          editor: false,
+          color: 'blue',
+          editorFormat: 'rgb',
+          onDone: function(color) {
+              cp.history.push(color.rgbaString);
+          },
+      });
+      document.getElementById("favorite").addEventListener("click", favColor);
+
+      // create a gradient of the two previously used colors when user clicks on create gradient button
+      document.getElementById("createGradient").addEventListener("click", createGradient);
+
+      // var dropdown = document.querySelector(".dropdown-menu");
+      // dropdown.innerHTML = gradientItems.map(function (color) {
+      //   return '<a >' + '</a>';
+      // }).join('') + '</ul>';
+      // {gradientItems.map((color, i) => (
+      //       <a class="dropdown-item" href="#" style=`background-image: ${color.gradient}`></a>
+      //     ))}
 
       
 			init(true);
@@ -121,5 +239,22 @@
 
 	<canvas id="myCanvas" width="750px" height="750px"></canvas>
 	<div id="color-palette"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-sm">
+         <button class="btn btn-primary" id="createGradient">Create Gradient</button>
+         <br/>
+        <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="dropdownMenuButton">Gradient Colors</button>
+        <div class="dropdown-menu">
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="button" id="picker">Color Picker</div>
+      </div>
+      <div class="col-sm">
+        <button id="favorite" class="btn btn-primary"><span class="bi bi-star"></span>Favorite</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
